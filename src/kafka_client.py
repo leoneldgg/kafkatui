@@ -69,3 +69,22 @@ class KafkaClient:
 
         msgs.sort(key=lambda m: (m[2], m[1]), reverse=True)
         return msgs[:max_messages]
+
+    def topic_total_lag(self, topic: str) -> int:
+        """Return total lag across all consumer groups for the given topic."""
+        try:
+            groups = [g[0] for g in self.admin.list_consumer_groups()]
+            if not groups:
+                return 0
+
+            total_lag = 0
+            for group in groups:
+                offsets = self.admin.list_consumer_group_offsets(group)
+                for tp, meta in offsets.items():
+                    if tp.topic == topic and meta.offset >= 0:
+                        end_offset = self.admin._client.end_offsets([tp])[tp]
+                        lag = max(end_offset - meta.offset, 0)
+                        total_lag += lag
+            return total_lag
+        except Exception:
+            return 0

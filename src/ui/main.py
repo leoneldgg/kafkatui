@@ -148,7 +148,10 @@ class KafkaTUI(App):
             info_tbl.add_row(f"p{p} earliest", str(e))
             info_tbl.add_row(f"p{p} latest", str(l))
             info_tbl.add_row(f"p{p} count", str(max(l - e, 0)))
-
+        
+        lag = self.client.topic_total_lag(topic)
+        info_tbl.add_row("Total lag (all groups)", str(lag))
+    
     def refresh_messages_only(self, topic: str) -> None:
         msg_tbl = self.query_one("#messages", DataTable)
         msg_tbl.clear()
